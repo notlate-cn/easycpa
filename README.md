@@ -9,7 +9,8 @@ CLIProxyAPI 的开箱即用部署方案:宿主机**只需 Docker**,无需安装 
 .
 ├── docker-compose.yml   # cliproxy 服务 + restic 备份 sidecar
 ├── .env                 # 凭证配置(从 .env.example 复制,不要提交到 git)
-├── start.sh             # 启动服务
+├── start.sh             # 启动服务(.env 有变化时自动重建容器)
+├── stop.sh              # 停止服务(保留数据)
 ├── update.sh            # 更新 CLIProxyAPI(自动先备份)
 ├── backup.sh            # 手动立即备份
 └── data/                # CLIProxyAPI 配置数据(自动创建)
@@ -38,6 +39,12 @@ cp .env.example .env
 ## 日常运维
 
 ```bash
+# 修改 .env 后重启生效(compose 会自动重建容器)
+./start.sh
+
+# 停止服务(保留数据)
+./stop.sh
+
 # 更新到最新版
 ./update.sh
 

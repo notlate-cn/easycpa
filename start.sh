@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 启动 CLIProxyAPI 服务 + 自动备份 sidecar
+# 启动服务(.env 有变化时 compose 会自动重建容器)
 set -euo pipefail
 cd "$(dirname "$0")"
 
