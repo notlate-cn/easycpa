@@ -23,6 +23,13 @@ fi
 CPA_PORT=$(grep -E '^CPA_PORT=' .env | cut -d= -f2 | tail -1)
 CPA_PORT=${CPA_PORT:-8317}
 
+if [[ ! -f data/config.yaml ]] || [[ ! -s data/config.yaml ]]; then
+  echo "错误: ./data/config.yaml 不存在或为空,服务无法启动。"
+  echo "  - 新机器迁移: 先执行 ./restore.sh 从 R2 恢复配置"
+  echo "  - 全新部署:   参考 config.example.yaml 手动创建 ./data/config.yaml"
+  exit 1
+fi
+
 docker compose up -d
 docker compose ps
 echo ">>> 服务已启动。API 地址: http://localhost:${CPA_PORT}"
