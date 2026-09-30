@@ -19,6 +19,10 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+# 读取 .env 中的端口用于显示(compose 本身会加载 .env)
+CPA_PORT=$(grep -E '^CPA_PORT=' .env | cut -d= -f2 | tail -1)
+CPA_PORT=${CPA_PORT:-8317}
+
 docker compose up -d
 docker compose ps
-echo ">>> 服务已启动。API 地址: http://localhost:${CPA_PORT:-8317}"
+echo ">>> 服务已启动。API 地址: http://localhost:${CPA_PORT}"
