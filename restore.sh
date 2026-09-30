@@ -26,6 +26,12 @@ timeout 600 docker compose run --rm --entrypoint restic \
   -v "$(pwd):/restore" backup-sync \
   restore "$SNAPSHOT" --target /restore
 
+# 校验恢复结果:config.yaml 不存在或为空即视为失败
+if [[ ! -f data/config.yaml ]] || [[ ! -s data/config.yaml ]]; then
+  echo "错误: 恢复后 ./data/config.yaml 不存在或为空,恢复可能失败,请检查上方输出"
+  exit 1
+fi
+
 echo ">>> 恢复完成。文件列表:"
 ls -la data/
 echo ">>> 下一步: ./start.sh 启动服务"
