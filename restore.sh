@@ -15,9 +15,10 @@ mkdir -p data
 # sidecar 的 entrypoint 是 /bin/sh -c,run 时需覆盖为 restic
 # compose 中 /data 是只读挂载,恢复时另挂宿主机项目目录到 /restore:
 # restic 会把快照的完整路径 /data 重建在 target 下,挂项目根目录正好落回 ./data
-timeout 60 docker compose run --rm --entrypoint restic backup-sync \
-  snapshots >/dev/null 2>&1 || {
-    echo "错误: 无法访问 R2 备份仓库,请检查 .env 中的 R2 凭证和网络"
+echo ">>> 检查 R2 备份仓库连通性 ..."
+timeout 180 docker compose run --rm --entrypoint restic backup-sync \
+  snapshots || {
+    echo "错误: 无法访问 R2 备份仓库,请检查 .env 中的 R2 凭证和网络(上方为 restic 原始报错)"
     exit 1
   }
 
