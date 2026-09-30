@@ -1,0 +1,50 @@
+name: easycpa
+
+services:
+  cliproxy:
+    image: ${CPA_IMAGE:-eceasy/cli-proxy-api:latest}
+    container_name: cliproxy-api
+    restart: unless-stopped
+    ports:
+      - "${CPA_PORT:-8317}:8317"
+    volumes:
+      # 只挂载配置和授权目录,不能挂整个 /CLIProxyAPI(会遮住镜像内的二进制)
+      - ./data/config.yaml:/CLIProxyAPI/config.yaml
+      - ./data/.cli-proxy-api:/CLIProxyAPI/.cli-proxy-api
+
+  # 伴生备份容器:纯 Docker 运行,内置 R2(S3) 定期备份,宿主机无需安装任何工具
+  backup-sync:
+    image: restic/restic:latest
+    container_name: cliproxy-backup
+    restart: unless-stopped
+    depends_on:
+      - cliproxy
+    volumes:
+      - ./data:/data:ro
+      - ./backup.state:/state
+    environment:
+      - RESTIC_REPOSITORY=s3:https://${CF_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET}/cliproxy-repo
+      - AWS_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
+      - RESTIC_PASSWORD=${BACKUP_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        # 仓库不存在则自动初始化,已存在时忽略报错
+        restic init 2>/dev/null || true
+        while true; do
+          # 配置内容哈希(排除日志);与上次备份时一致则跳过
+          NEW_HASH=$$(find /data -type f ! -path "*/logs/*" ! -name "*.log" -print0 | sort -z | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
+          if [ "$$NEW_HASH" != "$$(cat /state/last.hash 2>/dev/null)" ]; then
+            echo "[$$(date)] 检测到配置变动,正在备份到 Cloudflare R2..."
+            if timeout 1800 restic backup /data --exclude "*/logs/*" --exclude "*.log" --tag cliproxy; then
+              echo "$$NEW_HASH" > /state/last.hash
+            else
+              echo "[$$(date)] 备份失败,将在下个周期重试"
+            fi
+            timeout 600 restic forget --keep-daily 7 --keep-weekly 4 --prune || true
+          else
+            echo "[$$(date)] 配置无变动,跳过备份"
+          fi
+          sleep "$${BACKUP_INTERVAL:-21600}"
+        done
