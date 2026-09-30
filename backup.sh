@@ -3,6 +3,12 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+if [[ ! -f data/config.yaml ]] || [[ ! -s data/config.yaml ]]; then
+  echo "错误: ./data/config.yaml 不存在或为空,无可备份内容"
+  echo "  - 新机器迁移: 先执行 ./restore.sh 从 R2 恢复配置"
+  exit 1
+fi
+
 FORCE=""
 [[ "${1:-}" == "--force" ]] && FORCE="--force"
 

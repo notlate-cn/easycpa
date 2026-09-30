@@ -20,9 +20,11 @@ fi
 
 # 更新前先做一次即时备份(配置无变动时自动跳过)
 # sidecar 的 entrypoint 是 /bin/sh -c,run 时需覆盖为 restic;加超时防止网络故障时卡死
-echo ">>> 更新前触发一次即时备份到 R2 ..."
-if timeout 300 docker compose run --rm --entrypoint restic backup-sync \
+if [[ ! -f data/config.yaml ]] || [[ ! -s data/config.yaml ]]; then
+  echo "警告: ./data/config.yaml 不存在或为空,跳过更新前备份"
+elif timeout 300 docker compose run --rm --entrypoint restic backup-sync \
   backup /data --exclude "*/logs/*" --exclude "*.log" --tag pre-update; then
+  echo ">>> 更新前触发一次即时备份到 R2 ..."
   # 备份成功后刷新哈希状态,避免 sidecar 重复备份
   docker compose run --rm --entrypoint "" \
     -v "$(pwd)/backup.state:/state" \

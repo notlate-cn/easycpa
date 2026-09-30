@@ -33,6 +33,10 @@ services:
         # 仓库不存在则自动初始化,已存在时忽略报错
         restic init 2>/dev/null || true
         while true; do
+          # config.yaml 不存在或为空说明尚未初始化(如新机器未恢复),跳过备份避免污染仓库
+          if [ ! -s /data/config.yaml ]; then
+            echo "[$$(date)] ./data/config.yaml 缺失或为空,跳过备份(等待配置就绪)"
+          else
           # 配置内容哈希(排除日志);与上次备份时一致则跳过
           NEW_HASH=$$(find /data -type f ! -path "*/logs/*" ! -name "*.log" -print0 | sort -z | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
           if [ "$$NEW_HASH" != "$$(cat /state/last.hash 2>/dev/null)" ]; then
@@ -45,6 +49,7 @@ services:
             timeout 600 restic forget --keep-daily 7 --keep-weekly 4 --prune || true
           else
             echo "[$$(date)] 配置无变动,跳过备份"
+          fi
           fi
           sleep "$${BACKUP_INTERVAL:-21600}"
         done
