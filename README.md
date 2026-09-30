@@ -1,7 +1,6 @@
 # EasyCPA — CLIProxyAPI 快速部署 + R2 自动备份
 
-CLIProxyAPI 的开箱即用部署方案:宿主机**只需 Docker**,无需安装 restic / awscli / rclone。
-配置数据自动加密备份到 Cloudflare R2,新机器两个文件即可完成迁移。
+CLIProxyAPI 的开箱即用部署方案:宿主机只需 Docker，配置数据自动加密备份到 Cloudflare R2, 不同机器实现快速部署恢复和配置迁移。
 
 ## 文件结构
 
