@@ -19,6 +19,8 @@ CLIProxyAPI 的开箱即用部署方案:宿主机**只需 Docker**,无需安装 
 ## 首次部署
 
 ```bash
+git clone https://github.com/notlate-cn/easycpa.git
+cd easycpa
 cp .env.example .env
 # 编辑 .env,填入 Cloudflare R2 凭证
 ./start.sh
